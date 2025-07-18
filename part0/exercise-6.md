@@ -12,6 +12,7 @@ sequenceDiagram
     Note right of browser: Cabeçalho Content-Type: application/json [7, 8]
     server-->>browser: HTTP Status 201 Created [7]
     deactivate server
+    
     Note right of browser: Servidor NÃO solicita redirecionamento; navegador permanece na mesma página [7]
     Note right of browser: NENHUMA requisição HTTP adicional é feita pelo navegador [7]
 ```
