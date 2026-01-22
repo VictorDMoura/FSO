@@ -1,22 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import axios from "axios";
 
-const PERSONS_DATA = [
-  { name: "Arto Hellas", number: "040-123456", id: 1 },
-  { name: "Ada Lovelace", number: "39-44-5323523", id: 2 },
-  { name: "Dan Abramov", number: "12-43-234345", id: 3 },
-  { name: "Mary Poppendieck", number: "39-23-6423122", id: 4 },
-];
-
-
+const URL_DATA = "http://localhost:3001/persons";
 
 const App = () => {
-  const [persons, setPersons] = useState(PERSONS_DATA);
+  const [persons, setPersons] = useState([]);
 
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
+
+  const hook = () => {
+    axios.get(URL_DATA).then((response) => {
+      setPersons(response.data);
+    });
+  };
+
+  useEffect(hook, []);
 
   const handleSubmit = (event) => {
     event.preventDefault();
