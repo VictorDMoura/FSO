@@ -2,32 +2,47 @@ import { useEffect, useState } from "react";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
-import axios from "axios";
-
-const URL_DATA = "http://localhost:3001/persons";
+import personService from "./services/persons";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
-
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
 
   const hook = () => {
-    axios.get(URL_DATA).then((response) => {
-      setPersons(response.data);
+    personService.getAll().then((data) => {
+      setPersons(data);
     });
   };
 
   const create = () => {
-    axios.post(URL_DATA, {
-      name: newName,
-      number: newNumber,
-    }).then((response) => {
-      setPersons(persons.concat(response.data));
-      setNewName("");
-      setNewNumber("");
+    personService
+      .create({
+        name: newName,
+        number: newNumber,
+      })
+      .then((createdPerson) => {
+        setPersons(persons.concat(createdPerson));
+        setNewName("");
+        setNewNumber("");
+      });
+  };
+
+  const handleDelete = (id, name) => {
+    if (!window.confirm(`Delete ${name}?`)) return;
+
+    personService.deletePerson(id).then(() => {
+      setPersons(persons.filter((person) => person.id !== id));
     });
-  }
+  };
+
+  const handleUpdate = (id, updatedPerson) => {
+    personService.update(id, updatedPerson).then((returnedPerson) => {
+      setPersons(
+        persons.map((person) => (person.id !== id ? person : returnedPerson)),
+      );
+    });
+  };
 
   useEffect(hook, []);
 
@@ -43,7 +58,21 @@ const App = () => {
       (person) => person.name.toLowerCase() === newName.toLowerCase(),
     );
     if (nameExists) {
-      alert(`${newName} is already added to phonebook`);
+      const personToUpdate = persons.find(
+        (person) => person.name.toLowerCase() === newName.toLowerCase(),
+      );
+      if (
+        window.confirm(
+          `${newName} is already added to phonebook, replace the old number with a new one?`,
+        )
+      ) {
+        handleUpdate(personToUpdate.id, {
+          ...personToUpdate,
+          number: newNumber,
+        });
+      }
+      setNewName("");
+      setNewNumber("");
       return;
     }
 
@@ -80,7 +109,7 @@ const App = () => {
         onNumberChange={(e) => setNewNumber(e.target.value)}
       />
       <h2>Numbers</h2>
-      <Persons persons={persons} />
+      <Persons persons={persons} onDelete={handleDelete} />
     </div>
   );
 };
