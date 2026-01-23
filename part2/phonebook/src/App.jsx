@@ -18,6 +18,17 @@ const App = () => {
     });
   };
 
+  const create = () => {
+    axios.post(URL_DATA, {
+      name: newName,
+      number: newNumber,
+    }).then((response) => {
+      setPersons(persons.concat(response.data));
+      setNewName("");
+      setNewNumber("");
+    });
+  }
+
   useEffect(hook, []);
 
   const handleSubmit = (event) => {
@@ -37,7 +48,7 @@ const App = () => {
     }
 
     setPersons(persons.concat(newPerson));
-    PERSONS_DATA.push(newPerson);
+    create();
     setNewName("");
     setNewNumber("");
   };
