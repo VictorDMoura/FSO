@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import countriesService from "./services/countries";
+import useWeather from "./hooks/useWeather";
 import SearchInput from "./components/SearchInput";
 import CountriesList from "./components/CountriesList";
 import CountryDetail from "./components/CountryDetail";
+import BackButton from "./components/BackButton";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import NoResults from "./components/NoResults";
@@ -15,33 +17,46 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const { weather, icon, fetchWeather, reset: resetWeather } = useWeather();
 
   useEffect(() => {
     fetchCountries();
   }, []);
 
-  const fetchData = useCallback(
-    async (fetchFn, errorMsg) => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchFn();
-        setCountries(data);
-        setSelectedCountry(null);
-      } catch (err) {
-        setError(errorMsg);
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const fetchData = useCallback(async (fetchFn, errorMsg) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchFn();
+      setCountries(data);
+      setSelectedCountry(null);
+      resetWeather();
+    } catch (err) {
+      setError(errorMsg);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [resetWeather]);
 
   const fetchCountries = useCallback(
-    () => fetchData(() => countriesService.getAllCountries(), "Error loading countries"),
-    [fetchData]
+    () =>
+      fetchData(
+        () => countriesService.getAllCountries(),
+        "Error loading countries",
+      ),
+    [fetchData],
   );
+
+  useEffect(() => {
+    fetchCountries();
+  }, [fetchCountries]);
+
+  useEffect(() => {
+    if (selectedCountry && selectedCountry.capital) {
+      fetchWeather(selectedCountry.capital[0]);
+    }
+  }, [selectedCountry, fetchWeather]);
 
   const filteredCountries = countries.filter((c) =>
     c.name.common.toLowerCase().includes(search.toLowerCase()),
@@ -56,7 +71,7 @@ const App = () => {
     }
 
     if (filteredCountries.length === 1) {
-      return <CountryDetail country={filteredCountries[0]} />;
+      return <CountryDetail country={filteredCountries[0]} weather={weather} />;
     }
 
     return (
@@ -72,14 +87,18 @@ const App = () => {
       <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {selectedCountry && (
-        <button onClick={() => setSelectedCountry(null)}>Back</button>
+        <>
+          <BackButton onClick={() => setSelectedCountry(null)} />
+          <CountryDetail
+            country={selectedCountry}
+            weather={weather}
+            icon={icon}
+          />
+        </>
       )}
-      {selectedCountry && <CountryDetail country={selectedCountry} />}
 
       {!selectedCountry && loading && <LoadingSpinner />}
-      {!selectedCountry && error && (
-        <ErrorMessage message={error} />
-      )}
+      {!selectedCountry && error && <ErrorMessage message={error} />}
       {!selectedCountry && !loading && renderResults()}
     </div>
   );
