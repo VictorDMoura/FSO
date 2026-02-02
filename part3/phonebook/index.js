@@ -24,3 +24,12 @@ app.get("/info", (req, res) => {
   const length = PERSONS.length;
   res.send(`<p>Phonebook has info for ${length} speople</p><p>${date}</p>`);
 });
+
+app.get("/api/persons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const person = PERSONS.find((person) => person.id === id);
+  if (!person) {
+    return res.status(404).end();
+  }
+  res.json(person);
+});
