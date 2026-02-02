@@ -10,6 +10,10 @@ let PERSONS = [
   { id: 4, name: "Mary Poppendieck", number: "39-23-6423122" },
 ];
 
+const generateId = () => {
+  return Math.floor(Math.random() * 10000);
+};
+
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -38,4 +42,34 @@ app.delete("/api/persons/:id", (req, res) => {
   const id = Number(req.params.id);
   PERSONS = PERSONS.filter((person) => person.id !== id);
   res.status(204).end();
+});
+
+app.post("/api/persons", (req, res) => {
+  const body = req.body;
+
+  if (!body.name) {
+    return res.status(400).json({ error: "name missing" });
+  }
+
+  if (!body.number) {
+    return res.status(400).json({ error: "number missing" });
+  }
+
+  const nameExists = PERSONS.find(
+    (person) => person.name.toLowerCase() === body.name.toLowerCase(),
+  );
+
+  if (nameExists) {
+    return res.status(400).json({ error: "name must be unique" });
+  }
+
+  const person = {
+    id: generateId(),
+    name: body.name,
+    number: body.number,
+  };
+
+  PERSONS = PERSONS.concat(person);
+
+  res.json(person);
 });
